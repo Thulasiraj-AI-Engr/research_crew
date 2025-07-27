@@ -46,7 +46,6 @@ class MarketStrategyCrew:
     @agent
     def market_researcher(self) -> Agent:
         return Agent(
-<<<<<<< Updated upstream
             config=self.agents_config['market_researcher'],
             tools=[self.serper_tool],
             verbose=True,
@@ -98,29 +97,6 @@ class MarketStrategyCrew:
             verbose=True,
             max_rpm=8,
             memory=True
-=======
-            config=self.agents_config['researcher'],
-            tools=[SerperDevTool()],
-            llm=LLM(
-                model="openrouter/deepseek/deepseek-r1",
-                # base_url="https://openrouter.ai/api/v1",
-                api_key=deepseek_key,
-                temperature=0.7
-            )
-        )
-
-    @agent
-    def analyst(self) -> Agent:
-        return Agent(
-            config=self.agents_config['analyst'],
-            verbose=True,
-            llm=LLM(
-                model="openrouter/deepseek/deepseek-r1",
-                # base_url="https://openrouter.ai/api/v1",
-                api_key=deepseek_key,
-                temperature=0.7
-            )
->>>>>>> Stashed changes
         )
 
     @task
@@ -186,7 +162,6 @@ class MarketStrategyCrew:
             tasks=self.tasks,
             process=Process.sequential,
             verbose=True,
-<<<<<<< Updated upstream
             memory=True,
             cache=True,
             max_rpm=50,  # Overall crew rate limit
@@ -207,12 +182,3 @@ class MarketStrategyCrew:
     def kickoff_sync(self, inputs: Dict[str, Any]):
         """Synchronous execution method"""
         return self.crew().kickoff(inputs=inputs)
-=======
-            llm=LLM(
-                model="openrouter/deepseek/deepseek-r1",
-                # base_url="https://openrouter.ai/api/v1",
-                api_key=deepseek_key,
-                temperature=0.7
-            )
-        )
->>>>>>> Stashed changes
