@@ -11,7 +11,7 @@ def run():
     Run the research crew.
     """
     inputs = {
-        'topic': 'Artificial Intelligence in software development',
+        'topic': 'Artificial Intelligence in Healthcare'
     }
 
     result = ResearchCrew().crew().kickoff(inputs=inputs)
