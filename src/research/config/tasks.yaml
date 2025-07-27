@@ -1,33 +1,87 @@
-research_task:
+market_research_task:
   description: >
-    Conduct thorough research on {topic}. Focus on:
-    1. Key concepts and definitions
-    2. Historical development and recent trends
-    3. Major challenges and opportunities
-    4. Notable applications or case studies
-    5. Future outlook and potential developments
+    Conduct real-time market research on products similar to {product}. Focus on:
+    1. Current sales and marketing strategies used in the market
+    2. Product positioning, pricing, messaging, and channel tactics
+    3. Key advantages and disadvantages of competing products
+    4. Strategic gaps or differentiators observed in competitors
+    5. Key trends or shifts in how these products are being promoted
 
-    Make sure to organize your findings in a structured format with clear sections.
+    Use live data from the web and ensure findings are clearly segmented by brand or competitor.
   expected_output: >
-    A comprehensive research document with well-organized sections covering
-    all the requested aspects of {topic}. Include specific facts, figures,
-    and examples where relevant.
-  agent: researcher
+    A structured market research summary with actionable insights, 
+    real-time examples, and breakdowns of sales strategies used by competitors to position similar products to {product}.
+  agent: market_researcher
 
-analysis_task:
+competitor_intelligence_task:
   description: >
-    Analyze the research findings and create a comprehensive report on {topic}.
-    Your report should:
-    1. Begin with an executive summary
-    2. Include all key information from the research
-    3. Provide insightful analysis of trends and patterns
-    4. Offer recommendations or future considerations
-    5. Be formatted in a professional, easy-to-read style with clear headings
+    Analyze competitors of {product} such as {compitators}. Focus on:
+    1. Their current campaigns, launches, and updates
+    2. Pricing strategies, customer reviews, and hiring patterns
+    3. Their strengths, weaknesses, and tactical positioning
+    4. Emerging patterns or predictive movements in their strategy
+    5. How their approach compares and contrasts with industry norms
+
+    Use multiple real-time sources and present findings with strategic insights.
   expected_output: >
-    A polished, professional report on {topic} that presents the research
-    findings with added analysis and insights. The report should be well-structured
-    with an executive summary, main sections, and conclusion.
-  agent: analyst
-  context:
-    - research_task
-  output_file: output/report.md
+    A comprehensive competitor intelligence report with timelines, observed patterns, 
+    real-world examples, and SWOT-style summaries for each key competitor in relation to {product}.
+  agent: competitor_intelligence
+
+data_structuring_task:
+  description: >
+    Collect and organize raw data related to {product} from Market Research, Competitor Intelligence, and Customer Profiling agents. Focus on:
+    1. Normalizing inconsistent formats across sources
+    2. Cleaning and validating noisy or duplicate data
+    3. Structuring unstructured text, reviews, and campaign info into JSON or tabular format
+    4. Tagging data for easy querying by other agents
+    5. Creating a unified, clean dataset for strategic analysis
+
+    Ensure high-quality, consistent data formatting ready for decision-making agents.
+  expected_output: >
+    A structured dataset or JSON document containing cleaned, unified data across all source types,
+    optimized for use by the Strategy Maker Agent and downstream tasks.
+  agent: data_extractor
+
+customer_profiling_task:
+  description: >
+    Define the ideal customer profile for {product} targeting {target_audance}. Focus on:
+    1. Demographics, firmographics, behaviors, and purchase motivations
+    2. Patterns in current customer engagement and conversion
+    3. Similar customer bases from competitor insights
+    4. Micro-segmentation opportunities based on market signals
+    5. Updates to customer segments as new data is gathered
+
+    Cross-reference external market and competitor data with internal engagement signals.
+  expected_output: >
+    A well-defined set of customer profiles segmented by characteristics and readiness,
+    highlighting actionable segments with the highest conversion potential for {product}.
+  agent: customer_profiler
+
+strategy_maker_task:
+  description: >
+    Formulate the best go-to-market strategy for {product} using structured insights from Market Research, Competitor Intelligence, and Ideal Customer Profiling. Focus on:
+    1. Strategic positioning, messaging, and channel selection
+    2. Pricing, product differentiation, and promotion strategy
+    3. Key opportunities and risk mitigation
+    4. Tailoring strategy for identified customer segments
+    5. Integration of feedback and adaptability to real-time changes
+
+    Use structured, validated data from the Data Extraction & Structuring Agent to ensure precision.
+  expected_output: >
+    A clear, actionable go-to-market strategy for {product}, covering positioning, messaging, pricing, and target segment actions—ready for execution by marketing or growth teams.
+  agent: strategy_maker
+
+customer_insights_task:
+  description: >
+    Analyze and articulate the most pressing pain points and motivations of {target_audance} for {product}. Focus on:
+    1. Identifying specific challenges and unmet needs
+    2. Mapping product value to solve those needs
+    3. Embedding trust-building elements (proof, credibility)
+    4. Personalization recommendations for messaging
+    5. Providing updated insights to the Strategy Maker Agent
+
+    Use data from profiling, market trends, and behavioral signals.
+  expected_output: >
+    A customer insight brief with pain point analysis, value proposition mapping, personalization suggestions, and trust-enhancing elements ready to integrate into strategic messaging.
+  agent: customer_insights
