@@ -167,12 +167,12 @@ class MarketStrategyCrew:
             max_rpm=50,  # Overall crew rate limit
             output_log_file="market_strategy_logs.json",
             planning=True,  # Enable planning for better coordination
-            embedder={
-                "provider": "openai",
-                "config": {
-                    "model": "text-embedding-3-small"
+                embedder={
+                    "provider": "deepseek",
+                    "config": {
+                        "model": "openrouter/deepseek/deepseek-r1"
+                    }
                 }
-            }
         )
 
     async def kickoff_async(self, inputs: Dict[str, Any]):
