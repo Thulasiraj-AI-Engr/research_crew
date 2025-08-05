@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from src.research.crew import create_crew
+from crew import create_crew
 
 load_dotenv()
 

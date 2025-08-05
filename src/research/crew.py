@@ -4,7 +4,6 @@ from pathlib import Path
 import yaml
 from dotenv import load_dotenv
 import os
-from datetime import datetime
 
 load_dotenv()
 
@@ -28,147 +27,126 @@ def create_llm():
     )
 
 class MarketStrategyFlow(Flow):
-    """Dynamic Market Strategy Flow with parallel execution"""
+    """Market Strategy Flow using CrewAI Flow"""
     
-    def __init__(self, inputs, max_retries=3):
+    def __init__(self, inputs):
         super().__init__()
         self.inputs = inputs
-        self.max_retries = max_retries
         self.results = {}
         
-        # Dynamic mapping of main.py inputs to agent variables
+        # Load configurations
+        base_path = Path(__file__).resolve().parent
+        config_path = base_path / "config"
+        self.agents_data = load_yaml(config_path / "agents.yaml")
+        self.tasks_data = load_yaml(config_path / "tasks.yaml")
+        self.llm = create_llm()
+        
+        # Map inputs to context
         self.context = {
             "product": inputs.get("product_description", ""),
-            "compitators": inputs.get("competitors", ""),  # Keep original YAML key
-            "target_audance": inputs.get("target_audience", ""),  # Keep original YAML key
+            "compitators": inputs.get("competitors", ""),
+            "target_audance": inputs.get("target_audience", ""),
             "industry": inputs.get("industry", ""),
             "region": inputs.get("region", "")
         }
 
-    def retry_task(self, task_name, crew_func, task_inputs=None):
-        """Execute task with retry mechanism"""
-        for attempt in range(1, self.max_retries + 1):
-            try:
-                print(f"🔄 {task_name} - Attempt {attempt}")
-                crew = crew_func()
-                
-                # Use custom inputs if provided, otherwise use default context
-                inputs_to_use = task_inputs if task_inputs else self.context
-                result = crew.kickoff(inputs=inputs_to_use)
-                
-                if result and str(result).strip():
-                    print(f"✅ {task_name} - Completed")
-                    return result
-                    
-            except Exception as e:
-                print(f"❌ {task_name} - Attempt {attempt} failed: {str(e)}")
-                if attempt == self.max_retries:
-                    return f"{task_name} failed after {self.max_retries} attempts. Using available data for strategy."
+    def create_single_crew(self, agent_key, task_key):
+        """Create a crew with single agent and task"""
+        # Create agent
+        agent_data = self.agents_data[agent_key]
+        agent = Agent(
+            role=agent_data.get("role", "").format(**self.context),
+            goal=agent_data.get("goal", "").format(**self.context),
+            backstory=agent_data.get("backstory", "").format(**self.context),
+            allow_delegation=False,
+            llm=self.llm,
+            verbose=True
+        )
         
-        return f"{task_name} - No valid result"
+        # Create task
+        task_data = self.tasks_data[task_key]
+        task = Task(
+            description=task_data.get("description", "").format(**self.context),
+            expected_output=task_data.get("expected_output", "").format(**self.context),
+            agent=agent
+        )
+        
+        # Create and return crew
+        return Crew(
+            agents=[agent],
+            tasks=[task],
+            process=Process.sequential,
+            verbose=True
+        )
 
     @start()
-    def start_parallel_research(self):
-        """Start parallel research phase"""
-        print("🚀 Starting parallel market research and competitor analysis...")
-        return {"phase": "parallel_research"}
+    def start_research(self):
+        """Start the flow"""
+        print("🚀 Starting Market Strategy Flow...")
+        return "Flow started"
 
-    @listen(start_parallel_research)
+    @listen("start_research")
     def market_research(self, context):
-        """Execute market research in parallel"""
-        result = self.retry_task("Market Research", 
-                                lambda: create_single_agent_crew("market_researcher", "market_research_task"))
+        """Execute market research"""
+        print("📊 Running Market Research...")
+        crew = self.create_single_crew("market_researcher", "market_research_task")
+        result = crew.kickoff()
         self.results["market_research"] = result
-        return {"task": "market_research", "status": "completed"}
+        return "Market research completed"
 
-    @listen(start_parallel_research)
+    @listen("market_research")
     def competitor_analysis(self, context):
-        """Execute competitor analysis in parallel"""
-        result = self.retry_task("Competitor Analysis", 
-                                lambda: create_single_agent_crew("competitor_intelligence", "competitor_intelligence_task"))
+        """Execute competitor analysis"""
+        print("🏢 Running Competitor Analysis...")
+        crew = self.create_single_crew("competitor_intelligence", "competitor_intelligence_task")
+        result = crew.kickoff()
         self.results["competitor_analysis"] = result
-        return {"task": "competitor_analysis", "status": "completed"}
+        return "Competitor analysis completed"
 
-    @listen((market_research, competitor_analysis))  # ✅ FIXED: Added tuple syntax
-    def data_structuring(self, contexts):
-        """Structure all research data"""
-        print("📊 Structuring research data...")
-        
-        # Prepare enhanced context with research results
-        structure_context = self.context.copy()
-        structure_context.update({
-            "market_research_data": self.results.get("market_research", "Limited market research data"),
-            "competitor_data": self.results.get("competitor_analysis", "Limited competitor data")
-        })
-        
-        result = self.retry_task("Data Structuring", 
-                                lambda: create_single_agent_crew("data_extractor", "data_structuring_task"),
-                                structure_context)
+    @listen("competitor_analysis")
+    def data_structuring(self, context):
+        """Structure the data"""
+        print("📋 Structuring Data...")
+        crew = self.create_single_crew("data_extractor", "data_structuring_task")
+        result = crew.kickoff()
         self.results["structured_data"] = result
-        return {"task": "data_structuring", "status": "completed"}
+        return "Data structuring completed"
 
-    @listen(data_structuring)
-    def start_parallel_customer_analysis(self, context):
-        """Start parallel customer analysis phase"""
-        print("👥 Starting parallel customer profiling and insights analysis...")
-        return {"phase": "parallel_customer_analysis"}
-
-    @listen(start_parallel_customer_analysis)
+    @listen("data_structuring")
     def customer_profiling(self, context):
-        """Find ICP customers - runs in parallel with insights"""
-        customer_context = self.context.copy()
-        customer_context["structured_data"] = self.results.get("structured_data", "")
-        
-        result = self.retry_task("Customer Profiling", 
-                                lambda: create_single_agent_crew("customer_profiler", "customer_profiling_task"),
-                                customer_context)
+        """Profile customers"""
+        print("👥 Customer Profiling...")
+        crew = self.create_single_crew("customer_profiler", "customer_profiling_task")
+        result = crew.kickoff()
         self.results["customer_profiles"] = result
-        return {"task": "customer_profiling", "status": "completed"}
+        return "Customer profiling completed"
 
-    @listen(start_parallel_customer_analysis)
+    @listen("customer_profiling")
     def customer_insights(self, context):
-        """Analyze pain points - runs in parallel with profiling"""
-        insights_context = self.context.copy()
-        insights_context["structured_data"] = self.results.get("structured_data", "")
-        
-        result = self.retry_task("Customer Insights", 
-                                lambda: create_single_agent_crew("customer_insights", "customer_insights_task"),
-                                insights_context)
+        """Gather customer insights"""
+        print("💡 Customer Insights...")
+        crew = self.create_single_crew("customer_insights", "customer_insights_task")
+        result = crew.kickoff()
         self.results["customer_insights"] = result
-        return {"task": "customer_insights", "status": "completed"}
+        return "Customer insights completed"
 
-    @listen((customer_profiling, customer_insights))  # ✅ FIXED: Added tuple syntax
-    def final_strategy(self, contexts):
-        """Create final marketing strategy"""
-        print("🎯 Creating final marketing strategy...")
-        
-        # Prepare comprehensive context with all results
-        strategy_context = self.context.copy()
-        strategy_context.update({
-            "market_research_data": self.results.get("market_research", ""),
-            "competitor_data": self.results.get("competitor_analysis", ""),
-            "structured_data": self.results.get("structured_data", ""),
-            "customer_profiles": self.results.get("customer_profiles", ""),
-            "customer_insights": self.results.get("customer_insights", "")
-        })
-        
-        result = self.retry_task("Strategy Creation", 
-                                lambda: create_single_agent_crew("strategy_maker", "strategy_maker_task"),
-                                strategy_context)
+    @listen("customer_insights")
+    def final_strategy(self, context):
+        """Create final strategy"""
+        print("🎯 Creating Final Strategy...")
+        crew = self.create_single_crew("strategy_maker", "strategy_maker_task")
+        result = crew.kickoff()
         self.results["final_strategy"] = result
         
-        # Generate comprehensive report
+        # Save report
         self.save_report()
         
-        return {"task": "final_strategy", "status": "completed", "result": result}
+        return result
 
     def save_report(self):
-        """Save comprehensive report to report.md"""
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
+        """Save comprehensive report"""
         report = f"""# 🚀 Market Strategy Analysis Report
 
-**Generated:** {timestamp}
 **Product:** {self.context.get('product', 'N/A')}
 **Industry:** {self.context.get('industry', 'N/A')}
 **Region:** {self.context.get('region', 'N/A')}
@@ -177,135 +155,57 @@ class MarketStrategyFlow(Flow):
 
 ---
 
-## 📊 Market Research Analysis
-{self.results.get('market_research', 'No data available')}
+## 📊 Market Research
+{self.results.get('market_research', 'No data')}
 
 ---
 
-## 🏢 Competitor Intelligence  
-{self.results.get('competitor_analysis', 'No data available')}
+## 🏢 Competitor Analysis
+{self.results.get('competitor_analysis', 'No data')}
 
 ---
 
-## 📋 Structured Data Insights
-{self.results.get('structured_data', 'No data available')}
+## 📋 Structured Data
+{self.results.get('structured_data', 'No data')}
 
 ---
 
-## 👥 Customer Profiling (ICP)
-{self.results.get('customer_profiles', 'No data available')}
+## 👥 Customer Profiling
+{self.results.get('customer_profiles', 'No data')}
 
 ---
 
-## 💡 Customer Insights & Pain Points
-{self.results.get('customer_insights', 'No data available')}
+## 💡 Customer Insights
+{self.results.get('customer_insights', 'No data')}
 
 ---
 
-## 🎯 Final Marketing Strategy
-{self.results.get('final_strategy', 'No data available')}
+## 🎯 Final Strategy
+{self.results.get('final_strategy', 'No data')}
 
 ---
-
-*Report generated by Market Strategy AI Flow*
+*Generated by Market Strategy AI Flow*
 """
         
         with open("report.md", "w", encoding="utf-8") as f:
             f.write(report)
-        
-        print("📄 Detailed report saved to report.md")
-
-def create_single_agent_crew(agent_key, task_key):
-    """Create a single-agent crew for specific task with enhanced prompts"""
-    base_path = Path(__file__).resolve().parent
-    config_path = base_path / "config"
-    
-    # Load configurations
-    agents_data = load_yaml(config_path / "agents.yaml")
-    tasks_data = load_yaml(config_path / "tasks.yaml")
-    llm = create_llm()
-    
-    # Create agent with enhanced structured output capability
-    agent_data = agents_data[agent_key]
-    
-    # Enhanced backstory for structured output
-    enhanced_backstory = agent_data.get("backstory", "") + """
-
-IMPORTANT OUTPUT REQUIREMENTS:
-- Always provide structured, detailed responses in markdown format
-- Use clear headings, bullet points, and organized sections
-- Include specific examples and actionable insights
-- Ensure all data is properly formatted and easy to read
-- When analyzing data, provide clear categorization and prioritization
-"""
-    
-    agent = Agent(
-        role=agent_data.get("role", ""),
-        goal=agent_data.get("goal", ""),
-        backstory=enhanced_backstory,
-        allow_delegation=False,
-        llm=llm,
-        verbose=True,
-        memory=True
-    )
-    
-    # Create task with enhanced output requirements
-    task_data = tasks_data[task_key]
-    
-    # Enhanced description for better structured output
-    enhanced_description = task_data.get("description", "") + """
-
-OUTPUT FORMAT REQUIREMENTS:
-- Structure your response with clear markdown headings
-- Use bullet points for lists and key findings
-- Include specific examples and data points
-- Organize information in logical sections
-- Provide actionable insights and recommendations
-"""
-    
-    task = Task(
-        description=enhanced_description,
-        expected_output=task_data.get("expected_output", "") + "\n\nEnsure the output is well-structured with clear markdown formatting, specific examples, and actionable insights.",
-        agent=agent,
-        output_format="markdown"
-    )
-    
-    # Create crew
-    return Crew(
-        agents=[agent],
-        tasks=[task],
-        process=Process.sequential,
-        verbose=True
-    )
+        print("📄 Report saved to report.md")
 
 def create_crew():
-    """Main function to create the market strategy crew"""
+    """Create and return crew instance"""
     
     class MarketStrategyCrew:
         def __init__(self):
             self.flow = None
             
         def kickoff(self, inputs):
-            """Execute the market strategy flow with dynamic inputs"""
-            print(f"🚀 Starting Market Strategy Analysis for: {inputs.get('product_description', 'Unknown Product')}")
-            print(f"🎯 Industry: {inputs.get('industry', 'Not specified')}")
-            print(f"🌍 Region: {inputs.get('region', 'Not specified')}")
-            print(f"🏢 Competitors: {inputs.get('competitors', 'Not specified')}")
-            print(f"👥 Target Audience: {inputs.get('target_audience', 'Not specified')}")
-            print("-" * 60)
-            
-            # Create and execute flow with dynamic inputs
-            self.flow = MarketStrategyFlow(inputs, max_retries=3)
+            """Execute the flow"""
+            # Create and run flow
+            self.flow = MarketStrategyFlow(inputs)
             result = self.flow.kickoff()
             
-            # Return final strategy for main.py
-            final_strategy = self.flow.results.get("final_strategy", "Strategy generation completed with available data")
-            return self.process_output(final_strategy)
-            
-        def process_output(self, output):
-            """Process and enhance output after crew completion"""
-            print("✅ Market strategy analysis completed successfully!")
-            enhanced_output = f"{output}\n\n--- Analysis completed by CrewAI Market Strategy Team ---"
-            return enhanced_output
+            # Return final strategy
+            final_strategy = self.flow.results.get("final_strategy", "Strategy completed")
+            return str(final_strategy)
     
     return MarketStrategyCrew()
