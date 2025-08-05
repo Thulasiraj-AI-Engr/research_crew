@@ -20,7 +20,7 @@ def create_llm():
         raise ValueError("DEEPSEEK_API_KEY environment variable is required")
     
     return LLM(
-        provider="deepseek",  # Corrected provider
+        provider="deepseek",
         model="deepseek-chat",
         api_key=deepseek_api_key,
         temperature=0.2,
@@ -89,7 +89,7 @@ class MarketStrategyFlow(Flow):
         self.results["competitor_analysis"] = result
         return {"task": "competitor_analysis", "status": "completed"}
 
-    @listen(market_research, competitor_analysis)
+    @listen((market_research, competitor_analysis))  # ✅ FIXED: Added tuple syntax
     def data_structuring(self, contexts):
         """Structure all research data"""
         print("📊 Structuring research data...")
@@ -137,7 +137,7 @@ class MarketStrategyFlow(Flow):
         self.results["customer_insights"] = result
         return {"task": "customer_insights", "status": "completed"}
 
-    @listen(customer_profiling, customer_insights)
+    @listen((customer_profiling, customer_insights))  # ✅ FIXED: Added tuple syntax
     def final_strategy(self, contexts):
         """Create final marketing strategy"""
         print("🎯 Creating final marketing strategy...")
@@ -223,7 +223,7 @@ def create_single_agent_crew(agent_key, task_key):
     # Load configurations
     agents_data = load_yaml(config_path / "agents.yaml")
     tasks_data = load_yaml(config_path / "tasks.yaml")
-    llm = create_llm()  # Uses corrected DeepSeek provider
+    llm = create_llm()
     
     # Create agent with enhanced structured output capability
     agent_data = agents_data[agent_key]
