@@ -13,17 +13,16 @@ def load_yaml(file_path):
         return yaml.safe_load(file)
 
 def create_llm():
-    """Create DeepSeek LLM instance"""
-    deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
-    if not deepseek_api_key:
-        raise ValueError("DEEPSEEK_API_KEY environment variable is required")
+    """Create DeepSeek LLM via OpenRouter"""
+    openrouter_api_key = os.getenv("OPENROUTER_API_KEY")  # Changed from DEEPSEEK_API_KEY
+    if not openrouter_api_key:
+        raise ValueError("OPENROUTER_API_KEY environment variable is required")
     
     return LLM(
-        provider="deepseek",
-        model="deepseek-chat",
-        api_key=deepseek_api_key,
-        temperature=0.2,
-        stream=True
+        model="openrouter/deepseek/deepseek-r1",
+        base_url="https://openrouter.ai/api/v1",
+        api_key=openrouter_api_key,
+        temperature=0.2
     )
 
 class MarketStrategyFlow(Flow):
