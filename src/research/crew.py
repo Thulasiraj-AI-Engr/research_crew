@@ -14,14 +14,14 @@ def load_yaml(file_path):
 
 def create_llm():
     """Create DeepSeek LLM via OpenRouter"""
-    openrouter_api_key = os.getenv("OPENROUTER_API_KEY")  # Changed from DEEPSEEK_API_KEY
-    if not openrouter_api_key:
-        raise ValueError("OPENROUTER_API_KEY environment variable is required")
-    
+    deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")  # Changed from DEEPSEEK_API_KEY
+    if not deepseek_api_key:
+        raise ValueError("DEEPSEEK_API_KEY environment variable is required")
+
     return LLM(
         model="openrouter/deepseek/deepseek-r1",
         base_url="https://openrouter.ai/api/v1",
-        api_key=openrouter_api_key,
+        api_key=deepseek_api_key,
         temperature=0.2
     )
 
