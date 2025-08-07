@@ -14,7 +14,7 @@ def load_yaml(file_path):
 
 def create_llm():
     """Create DeepSeek LLM via OpenRouter"""
-    deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")  # Changed from DEEPSEEK_API_KEY
+    deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")  
     if not deepseek_api_key:
         raise ValueError("DEEPSEEK_API_KEY environment variable is required")
 
