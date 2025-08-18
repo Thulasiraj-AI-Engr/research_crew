@@ -75,7 +75,22 @@ class MarketStrategyFlow(Flow):
             agents=[agent],
             tasks=[task],
             process=Process.sequential,
+<<<<<<< Updated upstream
             verbose=True
+=======
+            verbose=True,
+            memory=True,
+            cache=True,
+            max_rpm=50,  # Overall crew rate limit
+            output_log_file="market_strategy_logs.json",
+            planning=True,  # Enable planning for better coordination
+            embedder={
+                "provider": "deepseek",
+                "config": {
+                    "model": "openrouter/deepseek/deepseek-r1"
+                }
+            }
+>>>>>>> Stashed changes
         )
 
     @start()
