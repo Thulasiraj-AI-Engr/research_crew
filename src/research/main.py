@@ -1,25 +1,27 @@
 import os
 from dotenv import load_dotenv
-from crew import ResearchCrew
+from crew import create_crew
 
 load_dotenv()
 
-os.makedirs('output', exist_ok=True)
+def main():
+    crew = create_crew()
 
-def run():
-    """
-    Run the research crew.
-    """
     inputs = {
-        'topic': 'Artificial Intelligence in Healthcare'
+        "product_description": input("Describe your product: "),
+        "industry": input("Industry or category: "),
+        "region": input("Target region: "),
+        "competitors": input("List key competitors (comma-separated): "),
+        "target_audience": input("Who is your target audience (demographics, ICP): ")
     }
 
-    result = ResearchCrew().crew().kickoff(inputs=inputs)
+    result = crew.kickoff(inputs=inputs)
+    
+    with open("final_marketing_strategy.md", "w") as file:
+        file.write(result)
 
-    print("\n\n=== FINAL REPORT ===\n\n")
-    print(result.raw)
-
-    print("\n\nReport has been saved to output/report.md")
+    print("\n✅ Marketing strategy saved to final_marketing_strategy.md")
+    print("📄 Detailed analysis saved to report.md")
 
 if __name__ == "__main__":
-    run()
+    main()
